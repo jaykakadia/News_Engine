@@ -21,4 +21,10 @@ def create_app():
     def home():
         return "News Engine API is running"
 
+    # Start the background scheduler
+    import os
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+        from app.ingestion.scheduler import start_scheduler
+        start_scheduler()
+
     return app
