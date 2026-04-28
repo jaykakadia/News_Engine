@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}News Feed - News Engine{% endblock %}
+{% block header %}Market Intelligence Feed{% endblock %}
+
+{% block content %}
+<div class="news-grid">
+    {% for item in news %}
+    <article class="news-card">
+        <div class="news-badge">{{ item.category }}</div>
+        <a href="{{ item.link }}" target="_blank" class="news-title">{{ item.title }}</a>
+        <p class="news-content">{{ item.content | striptags }}</p>
+        <div class="news-meta">
+            <span><i class="far fa-clock"></i> {{ item.published_at.strftime('%Y-%m-%d') if item.published_at else 'Today' }}</span>
+            <span><i class="fas fa-link"></i> {{ item.source }}</span>
+        </div>
+    </article>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox fa-3x"></i>
+        <p>No news items found. The engine might be fetching data...</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

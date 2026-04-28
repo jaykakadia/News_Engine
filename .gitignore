@@ -45,3 +45,6 @@ instance/
 
 # Logs
 *.log
+
+# Databases
+Server/chroma_db/

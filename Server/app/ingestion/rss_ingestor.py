@@ -14,7 +14,7 @@ def generate_id(link: str):
     """Generates a unique ID from a URL."""
     return hashlib.md5(link.encode()).hexdigest()
 
-def ingest_rss(feed_url, category="General"):
+def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
     """
     Fetches news from RSS, generates embeddings, and saves to DynamoDB and ChromaDB.
     """
@@ -23,7 +23,7 @@ def ingest_rss(feed_url, category="General"):
     
     count = 0
     # Process up to 10 entries per feed to keep it fast
-    for entry in feed.entries: 
+    for entry in feed.entries[:10]: 
         news_id = generate_id(entry.link)
         
         # 1. Check if already exists in DynamoDB
@@ -65,4 +65,6 @@ def ingest_rss(feed_url, category="General"):
     return count
 
 if __name__ == "__main__":
-    ingest_rss()
+    from config.config import RSS_FEEDS
+    for url, cat in RSS_FEEDS:
+        ingest_rss(url, cat)

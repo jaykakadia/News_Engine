@@ -25,7 +25,9 @@ class NewsItem:
         Creates a new news item in DynamoDB.
         """
         try:
-            cls.table.put_item(Item=news_data.dict())
+            # Convert to JSON-compatible dict (converts datetime to ISO string)
+            item_dict = news_data.model_dump(mode='json')
+            cls.table.put_item(Item=item_dict)
             return True
         except ClientError as e:
             print(f"Error creating news item: {e.response['Error']['Message']}")

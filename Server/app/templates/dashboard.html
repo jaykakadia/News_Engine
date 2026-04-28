@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - News Engine{% endblock %}
+{% block header %}Analytics Overview{% endblock %}
+
+{% block content %}
+<div class="stats-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="stat-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Total News Items</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_news }}</p>
+    </div>
+    <div class="stat-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Active Sources</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_sources }}</p>
+    </div>
+    <div class="stat-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Categories Tracked</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_categories }}</p>
+    </div>
+    <div class="stat-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Recent Triggers</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">0</p>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <div class="chart-container" style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color); height: 400px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+        <div style="text-align: center;">
+            <i class="fas fa-chart-bar fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>Growth Trends (Coming Soon)</p>
+        </div>
+    </div>
+    <div class="side-panel" style="display: flex; flex-direction: column; gap: 2rem;">
+        <div class="categories-panel" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem;">Top Categories</h3>
+            <div class="tags" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <span class="news-badge">Technology</span>
+                <span class="news-badge">Security</span>
+                <span class="news-badge">General</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

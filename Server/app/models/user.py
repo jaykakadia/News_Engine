@@ -25,7 +25,9 @@ class User:
         Creates a new user in DynamoDB.
         """
         try:
-            cls.table.put_item(Item=user_data.dict())
+            # Convert to JSON-compatible dict (converts datetime to ISO string)
+            item_dict = user_data.model_dump(mode='json')
+            cls.table.put_item(Item=item_dict)
             return True
         except ClientError as e:
             print(f"Error creating user: {e.response['Error']['Message']}")

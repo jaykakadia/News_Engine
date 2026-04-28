@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat - News Engine{% endblock %}
+{% block header %}News Intelligence AI{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-messages" id="chat-box">
+        <div class="message bot">
+            Hello Jay! I am your News Intelligence AI. You can ask me questions about the latest news, or ask for summaries of specific topics.
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="user-input" placeholder="Ask about the latest AI funding news...">
+        <button class="btn btn-primary" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    function sendMessage() {
+        const input = document.getElementById('user-input');
+        const box = document.getElementById('chat-box');
+        const text = input.value.trim();
+        
+        if (text) {
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = text;
+            box.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            
+            // Scroll to bottom
+            box.scrollTop = box.scrollHeight;
+            
+            // Mock bot response (we'll implement the real RAG backend later)
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot';
+                botMsg.textContent = "I'm processing your request regarding news... (Real AI responses coming soon once the Gemini RAG layer is activated)";
+                box.appendChild(botMsg);
+                box.scrollTop = box.scrollHeight;
+            }, 1000);
+        }
+    }
+
+    document.getElementById('user-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+{% endblock %}
