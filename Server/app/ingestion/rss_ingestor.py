@@ -14,34 +14,36 @@ def generate_id(link: str):
     """Generates a unique ID from a URL."""
     return hashlib.md5(link.encode()).hexdigest()
 
-def ingest_rss(feed_url="https://news.google.com/rss"):
+def ingest_rss(feed_url, category="General"):
     """
     Fetches news from RSS, generates embeddings, and saves to DynamoDB and ChromaDB.
     """
-    print(f"Starting ingestion from {feed_url}...")
+    print(f"Starting ingestion for [{category}] from {feed_url}...")
     feed = feedparser.parse(feed_url)
     
     count = 0
-    for entry in feed.entries[:20]: # Limit to 20 for testing
+    # Process up to 10 entries per feed to keep it fast
+    for entry in feed.entries: 
         news_id = generate_id(entry.link)
         
         # 1. Check if already exists in DynamoDB
         if NewsItem.get_by_id(news_id):
             continue
             
-        print(f"Processing: {entry.title}")
+        print(f"  - New item: {entry.title[:50]}...")
         
         # 2. Generate Embeddings
-        embedding = get_embeddings(entry.title + " " + getattr(entry, 'summary', ''))
+        content_text = entry.title + " " + getattr(entry, 'summary', '')
+        embedding = get_embeddings(content_text)
         
         # 3. Save to DynamoDB
         news_data = NewsItemSchema(
             news_id=news_id,
             title=entry.title,
             content=getattr(entry, 'summary', entry.title),
-            source=getattr(entry, 'source', {'title': 'Unknown'}).get('title', 'Unknown'),
-            published_at=datetime.utcnow(), # RSS date parsing can be tricky, using now for simplicity
-            category="General",
+            source=getattr(entry, 'source', {'title': 'Source'}).get('title', 'Source'),
+            published_at=datetime.utcnow(),
+            category=category,  # Use the passed category
             embedding_id=news_id
         )
         
@@ -50,12 +52,16 @@ def ingest_rss(feed_url="https://news.google.com/rss"):
             news_collection.add(
                 embeddings=[embedding],
                 documents=[news_data.content],
-                metadatas=[{"title": news_data.title, "source": news_data.source}],
+                metadatas=[{
+                    "title": news_data.title, 
+                    "source": news_data.source,
+                    "category": category # Add category to vector metadata
+                }],
                 ids=[news_id]
             )
             count += 1
             
-    print(f"Ingestion complete. Added {count} new items.")
+    print(f"  Added {count} new items for {category}.")
     return count
 
 if __name__ == "__main__":

@@ -1,20 +1,22 @@
 import time
 import threading
 from app.ingestion.rss_ingestor import ingest_rss
+from config.config import RSS_FEEDS
 
 def run_scheduler():
     """
-    Infinite loop that runs the ingestion every hour.
+    Infinite loop that runs the ingestion for all configured feeds every hour.
     """
-    print("News Scheduler started...")
+    print(f"News Scheduler started with {len(RSS_FEEDS)} feeds...")
     while True:
-        try:
-            ingest_rss()
-        except Exception as e:
-            print(f"Error during scheduled ingestion: {e}")
+        for url, category in RSS_FEEDS:
+            try:
+                ingest_rss(url, category)
+            except Exception as e:
+                print(f"Error during scheduled ingestion for {url}: {e}")
         
         # Wait for 1 hour (3600 seconds)
-        print("Scheduler sleeping for 1 hour...")
+        print("Scheduler cycle complete. Sleeping for 1 hour...")
         time.sleep(3600)
 
 def start_scheduler():
