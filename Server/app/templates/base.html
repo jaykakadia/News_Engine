@@ -61,7 +61,7 @@
                     </span>
                     <button class="btn btn-primary" style="pointer-events: none;">
                         <i class="fas fa-user"></i>
-                        <span>{{ current_user_name }}</span>
+                        <span>{{ current_user_email if current_user_email else current_user_name }}</span>
                     </button>
                     <a href="{{ url_for('auth.logout') }}" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.85rem;">
                         <i class="fas fa-sign-out-alt"></i>

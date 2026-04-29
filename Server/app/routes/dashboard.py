@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, session, request
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 from app.models.news import NewsItem
@@ -14,8 +14,17 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/', methods=['GET'])
 def index():
     # Fetch real news from DynamoDB
-    news_items = NewsItem.list_all(limit=30)
-    return render_template("index.html", news=news_items)
+    news_items = NewsItem.list_all(limit=200)
+    
+    # Get unique categories
+    categories = sorted(list(set(item.category for item in news_items)))
+    
+    # Filter by category if requested
+    selected_category = request.args.get('category')
+    if selected_category and selected_category != 'All':
+        news_items = [item for item in news_items if item.category == selected_category]
+        
+    return render_template("index.html", news=news_items[:50], categories=categories, selected_category=selected_category or 'All')
 
 @dashboard_bp.route('/article/<news_id>', methods=['GET'])
 def article_detail(news_id):

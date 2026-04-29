@@ -38,6 +38,7 @@ def create_app():
     def inject_user():
         return {
             'current_user_name': session.get('user_name', 'Guest'),
+            'current_user_email': session.get('user_email', ''),
             'current_user_role': session.get('user_role', ''),
             'is_logged_in': 'user_name' in session
         }
