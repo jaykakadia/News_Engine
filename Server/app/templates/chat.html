@@ -19,17 +19,22 @@
 </div>
 
 <script>
+    let chatHistory = [];
+
     function sendMessage() {
         const input = document.getElementById('user-input');
         const box = document.getElementById('chat-box');
         const text = input.value.trim();
         
         if (text) {
-            // Add user message
+            // Add user message to UI
             const userMsg = document.createElement('div');
             userMsg.className = 'message user';
             userMsg.textContent = text;
             box.appendChild(userMsg);
+            
+            // Add user message to history
+            chatHistory.push({role: 'user', content: text});
             
             // Clear input
             input.value = '';
@@ -51,7 +56,10 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ query: text })
+                body: JSON.stringify({ 
+                    query: text,
+                    history: chatHistory.slice(0, -1) // Send history excluding the current message
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -67,11 +75,23 @@
                     botMsg.textContent = "Error: " + data.error;
                     botMsg.style.color = "red";
                 } else {
+                    // Show the AI's thought process if it rewrote the query
+                    let thinkingHtml = "";
+                    if (data.search_query) {
+                        thinkingHtml = `<div style="font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 8px;">
+                            <i class="fas fa-search"></i> Searched database for: "${data.search_query}"
+                        </div>`;
+                    }
+                    
                     // Simple formatting for markdown-like text from Gemini
                     let formattedText = data.response
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\n/g, '<br>');
-                    botMsg.innerHTML = formattedText;
+                        
+                    botMsg.innerHTML = thinkingHtml + formattedText;
+                    
+                    // Add bot response to history
+                    chatHistory.push({role: 'model', content: data.response});
                 }
                 
                 box.appendChild(botMsg);

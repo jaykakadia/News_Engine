@@ -1,10 +1,8 @@
-from sentence_transformers import SentenceTransformer
 import os
+from google import genai
 
-# Initialize the model (it will download on first run)
-# We use a lightweight model suitable for CPU processing
-MODEL_NAME = 'all-MiniLM-L6-v2'
-model = SentenceTransformer(MODEL_NAME)
+# We use Google's advanced text-embedding model
+MODEL_NAME = 'gemini-embedding-2'
 
 def get_embeddings(text: str):
     """
@@ -13,12 +11,21 @@ def get_embeddings(text: str):
     """
     if not text:
         return []
+        
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("Warning: GEMINI_API_KEY not set. Cannot generate embeddings.")
+        return []
+        
+    client = genai.Client(api_key=api_key)
     
     # Generate embedding
-    embedding = model.encode(text)
+    response = client.models.embed_content(
+        model=MODEL_NAME,
+        contents=text
+    )
     
-    # Convert numpy array to list
-    return embedding.tolist()
+    return response.embeddings[0].values
 
 def get_bulk_embeddings(texts: list):
     """
@@ -26,6 +33,17 @@ def get_bulk_embeddings(texts: list):
     """
     if not texts:
         return []
+        
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("Warning: GEMINI_API_KEY not set. Cannot generate embeddings.")
+        return []
+        
+    client = genai.Client(api_key=api_key)
     
-    embeddings = model.encode(texts)
-    return embeddings.tolist()
+    response = client.models.embed_content(
+        model=MODEL_NAME,
+        contents=texts
+    )
+    
+    return [e.values for e in response.embeddings]
