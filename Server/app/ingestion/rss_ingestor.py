@@ -9,6 +9,7 @@ from app.models.news import NewsItem
 from app.schemas.models import NewsItemSchema
 from app.utils.embeddings import get_embeddings
 from app.utils.vector_db import news_collection
+from app.ingestion.trigger_engine import check_triggers
 
 # Fix for macOS SSL certificate verification issue
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -169,6 +170,8 @@ def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
                 metadatas=chunk_metadatas,
                 ids=chunk_ids
             )
+            # 6. Check triggers for this new article
+            check_triggers(news_data)
             count += 1
             
     print(f"  Added {count} new items for {category}.")

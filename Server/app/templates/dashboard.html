@@ -19,16 +19,14 @@
     </div>
     <div class="stat-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
         <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Recent Triggers</p>
-        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">0</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: {% if stats.recent_triggers > 0 %}#f59e0b{% else %}var(--accent-color){% endif %};">{{ stats.recent_triggers }}</p>
     </div>
 </div>
 
 <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-    <div class="chart-container" style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color); height: 400px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
-        <div style="text-align: center;">
-            <i class="fas fa-chart-bar fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
-            <p>Growth Trends (Coming Soon)</p>
-        </div>
+    <div class="chart-container" style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color); height: 400px; position: relative;">
+        <h3 style="margin-bottom: 1rem; font-size: 1rem;">News Ingestion Trends (Last 7 Days)</h3>
+        <canvas id="trendChart"></canvas>
     </div>
     <div class="side-panel" style="display: flex; flex-direction: column; gap: 2rem;">
         <div class="categories-panel" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
@@ -39,6 +37,96 @@
                 {% endfor %}
             </div>
         </div>
+        <div class="distribution-panel" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem;">Category Distribution</h3>
+            <canvas id="distChart" style="max-height: 200px;"></canvas>
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const categoryColors = {
+        'General': '#38bdf8',
+        'Technology': '#a78bfa',
+        'Security': '#f87171',
+        'Sports': '#4ade80',
+        'Business': '#fbbf24',
+        'Entertainment': '#f472b6'
+    };
+    
+    function getColor(cat) {
+        return categoryColors[cat] || '#94a3b8';
+    }
+
+    // --- Trend Line Chart ---
+    const trendLabels = {{ stats.trend_labels | safe }};
+    const trendDatasets = {{ stats.trend_datasets | safe }};
+    
+    const datasets = Object.entries(trendDatasets).map(([cat, data]) => ({
+        label: cat,
+        data: data,
+        borderColor: getColor(cat),
+        backgroundColor: getColor(cat) + '20',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2
+    }));
+
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: { labels: trendLabels, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#94a3b8', font: { family: 'Inter' } }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#94a3b8', stepSize: 1 },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
+    });
+
+    // --- Category Distribution Doughnut Chart ---
+    const catCounts = {{ stats.category_counts | safe }};
+    const catLabels = Object.keys(catCounts);
+    const catData = Object.values(catCounts);
+    const catColors = catLabels.map(c => getColor(c));
+
+    new Chart(document.getElementById('distChart'), {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catData,
+                backgroundColor: catColors,
+                borderColor: '#0f172a',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, padding: 10 }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
