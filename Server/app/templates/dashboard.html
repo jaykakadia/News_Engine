@@ -34,9 +34,9 @@
         <div class="categories-panel" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
             <h3 style="margin-bottom: 1rem; font-size: 1rem;">Top Categories</h3>
             <div class="tags" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                <span class="news-badge">Technology</span>
-                <span class="news-badge">Security</span>
-                <span class="news-badge">General</span>
+                {% for category in stats.categories %}
+                <span class="news-badge">{{ category }}</span>
+                {% endfor %}
             </div>
         </div>
     </div>

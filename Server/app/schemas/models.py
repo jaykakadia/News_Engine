@@ -2,12 +2,25 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
+class TenantSchema(BaseModel):
+    tenant_id: str
+    name: str
+    email: EmailStr
+    password_hash: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class TenantCreateSchema(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
 class UserSchema(BaseModel):
     user_id: str
     tenant_id: str
     email: EmailStr
     name: str
-    # password is not included in base schema or handled carefully
+    password_hash: str = ""
+    role: str = "user"  # "user" or "admin"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserCreateSchema(BaseModel):

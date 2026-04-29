@@ -7,7 +7,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/', methods=['GET'])
 def index():
     # Fetch real news from DynamoDB
-    news_items = NewsItem.list_all(limit=15)
+    news_items = NewsItem.list_all(limit=30)
     return render_template("index.html", news=news_items)
 
 @dashboard_bp.route('/article/<news_id>', methods=['GET'])
@@ -21,11 +21,13 @@ def article_detail(news_id):
 def get_dashboard():
     # Calculate basic stats
     news_items = NewsItem.list_all(limit=100)
+    categories = sorted(list(set([f[1] for f in RSS_FEEDS])))
     
     stats = {
         "total_news": len(news_items),
         "total_sources": len(RSS_FEEDS),
-        "total_categories": len(set([f[1] for f in RSS_FEEDS]))
+        "total_categories": len(categories),
+        "categories": categories
     }
     
     return render_template("dashboard.html", stats=stats)

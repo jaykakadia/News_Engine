@@ -55,11 +55,17 @@
         <main class="main-content">
             <header>
                 <h1>{% block header %}{% endblock %}</h1>
-                <div class="user-profile">
-                    <button class="btn btn-primary">
+                <div class="user-profile" style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
+                        {{ current_user_role }}
+                    </span>
+                    <button class="btn btn-primary" style="pointer-events: none;">
                         <i class="fas fa-user"></i>
-                        <span>Jay</span>
+                        <span>{{ current_user_name }}</span>
                     </button>
+                    <a href="{{ url_for('auth.logout') }}" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.85rem;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                 </div>
             </header>
 

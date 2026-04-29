@@ -1,6 +1,7 @@
 from app.utils.dynamodb import dynamodb, get_table_name
 from app.schemas.models import UserSchema
 from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Attr
 
 class User:
     table = dynamodb.Table(get_table_name('users'))
@@ -32,6 +33,23 @@ class User:
         except ClientError as e:
             print(f"Error creating user: {e.response['Error']['Message']}")
             return False
+
+    @classmethod
+    def get_by_email(cls, email):
+        """
+        Retrieves a user by their email using a table scan.
+        """
+        try:
+            response = cls.table.scan(
+                FilterExpression=Attr('email').eq(email)
+            )
+            items = response.get('Items', [])
+            if items:
+                return UserSchema(**items[0])
+            return None
+        except ClientError as e:
+            print(f"Error fetching user by email: {e.response['Error']['Message']}")
+            return None
 
     @classmethod
     def get_by_tenant(cls, tenant_id):
