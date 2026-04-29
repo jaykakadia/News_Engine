@@ -23,13 +23,20 @@ class NewsItem:
     def create(cls, news_data: NewsItemSchema):
         """
         Creates a new news item in DynamoDB.
+        Uses a conditional write to avoid duplicates during concurrent ingestion.
         """
         try:
             # Convert to JSON-compatible dict (converts datetime to ISO string)
             item_dict = news_data.model_dump(mode='json')
-            cls.table.put_item(Item=item_dict)
+            cls.table.put_item(
+                Item=item_dict,
+                ConditionExpression="attribute_not_exists(news_id)"
+            )
             return True
         except ClientError as e:
+            if e.response.get('Error', {}).get('Code') == "ConditionalCheckFailedException":
+                # Item already exists, safe to ignore
+                return False
             print(f"Error creating news item: {e.response['Error']['Message']}")
             return False
 
