@@ -41,6 +41,23 @@
             <h3 style="margin-bottom: 1rem; font-size: 1rem;">Category Distribution</h3>
             <canvas id="distChart" style="max-height: 200px;"></canvas>
         </div>
+        <div class="chat-history-panel" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                Recent AI Chats
+                <a href="{{ url_for('chat.chat_view') }}" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">View All <i class="fas fa-arrow-right"></i></a>
+            </h3>
+            {% if stats.recent_chats %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for chat in stats.recent_chats %}
+                <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color);">
+                    <p style="font-size: 0.9rem; margin-bottom: 0.25rem;"><i class="fas fa-comment-alt" style="color: var(--text-secondary); margin-right: 0.5rem; font-size: 0.8rem;"></i>"{{ chat.query }}"</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1rem 0;">No chat history yet. Ask the AI a question!</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 

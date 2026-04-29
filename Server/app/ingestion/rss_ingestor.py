@@ -10,6 +10,7 @@ from app.schemas.models import NewsItemSchema
 from app.utils.embeddings import get_embeddings
 from app.utils.vector_db import news_collection
 from app.ingestion.trigger_engine import check_triggers
+from app.ingestion.entity_extractor import extract_entities
 
 # Fix for macOS SSL certificate verification issue
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -137,6 +138,9 @@ def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
             # Strip HTML from summary (Google News sends HTML lists in summary)
             content = BeautifulSoup(summary, "html.parser").get_text(separator=' ', strip=True)
         
+        # 3.5 Extract entities using Gemini
+        entities = extract_entities(entry.title, content)
+        
         # 4. Save to DynamoDB
         news_data = NewsItemSchema(
             news_id=news_id,
@@ -146,7 +150,8 @@ def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
             link=link,
             published_at=datetime.utcnow(),
             category=category,
-            embedding_id=news_id
+            embedding_id=news_id,
+            entities=entities
         )
         
         if NewsItem.create(news_data):

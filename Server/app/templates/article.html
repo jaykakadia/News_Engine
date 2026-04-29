@@ -16,6 +16,32 @@
             <span><i class="far fa-clock"></i> {{ item.published_at.strftime('%B %d, %Y') if item.published_at else 'Today' }}</span>
             <span><i class="fas fa-link"></i> {{ item.source }}</span>
         </div>
+        
+        {% if item.entities %}
+        <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            {% if item.entities.people %}
+            {% for person in item.entities.people %}
+            <span style="background: rgba(167, 139, 250, 0.15); color: #a78bfa; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(167, 139, 250, 0.3);">
+                <i class="fas fa-user"></i> {{ person }}
+            </span>
+            {% endfor %}
+            {% endif %}
+            {% if item.entities.companies %}
+            {% for company in item.entities.companies %}
+            <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(56, 189, 248, 0.3);">
+                <i class="fas fa-building"></i> {{ company }}
+            </span>
+            {% endfor %}
+            {% endif %}
+            {% if item.entities.topics %}
+            {% for topic in item.entities.topics %}
+            <span style="background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(74, 222, 128, 0.3);">
+                <i class="fas fa-tag"></i> {{ topic }}
+            </span>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <div class="article-body">

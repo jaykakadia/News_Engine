@@ -44,6 +44,7 @@ class NewsItemSchema(BaseModel):
     published_at: datetime
     category: str
     embedding_id: Optional[str] = None
+    entities: Optional[dict] = None  # {"companies": [], "people": [], "topics": []}
 
 class TriggerSchema(BaseModel):
     trigger_id: str

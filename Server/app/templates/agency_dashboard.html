@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Agency Dashboard - News Engine{% endblock %}
+{% block header %}Agency Analytics{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Total Team Members</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_users }}</p>
+    </div>
+    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Total Triggers Fired</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: {{ '#f59e0b' if stats.total_triggers > 0 else 'var(--accent-color)' }};">{{ stats.total_triggers }}</p>
+    </div>
+    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">News in Database</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_news }}</p>
+    </div>
+    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Categories Tracked</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">{{ stats.total_categories }}</p>
+    </div>
+</div>
+
+<!-- Charts & Team Section -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Most Active Keywords -->
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 1.25rem; font-size: 1rem;"><i class="fas fa-tags" style="color: var(--accent-color);"></i> Most Tracked Keywords</h3>
+        <canvas id="keywordsChart" style="max-height: 250px;"></canvas>
+    </div>
+    
+    <!-- Category Interest Distribution -->
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 1.25rem; font-size: 1rem;"><i class="fas fa-folder" style="color: var(--accent-color);"></i> Category Interest Distribution</h3>
+        <canvas id="catInterestChart" style="max-height: 250px;"></canvas>
+    </div>
+</div>
+
+<!-- Team Members Table -->
+<div style="background: var(--card-bg); padding: 2rem; border-radius: 1.25rem; border: 1px solid var(--border-color);">
+    <h3 style="margin-bottom: 1.25rem; font-size: 1rem;"><i class="fas fa-users" style="color: var(--accent-color);"></i> Team Members — Trigger Activity</h3>
+    {% if stats.active_users %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.75rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Name</th>
+                <th style="text-align: left; padding: 0.75rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Email</th>
+                <th style="text-align: right; padding: 0.75rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Triggers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in stats.active_users %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 0.75rem; font-size: 0.9rem;">{{ user.name }}</td>
+                <td style="padding: 0.75rem; font-size: 0.85rem; color: var(--text-secondary);">{{ user.email }}</td>
+                <td style="padding: 0.75rem; text-align: right;">
+                    <span style="background: {% if user.trigger_count > 0 %}rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);{% else %}rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);{% endif %} padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; font-weight: 600;">
+                        {{ user.trigger_count }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No team members yet. Users can register under your agency.</p>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const categoryColors = {
+        'General': '#38bdf8', 'Technology': '#a78bfa', 'Security': '#f87171',
+        'Sports': '#4ade80', 'Business': '#fbbf24', 'Entertainment': '#f472b6'
+    };
+    const barColors = ['#38bdf8', '#a78bfa', '#f87171', '#4ade80', '#fbbf24', '#f472b6', '#fb923c', '#94a3b8'];
+    
+    // Keywords Bar Chart
+    const kwData = {{ stats.top_keywords | safe }};
+    const kwLabels = Object.keys(kwData);
+    const kwValues = Object.values(kwData);
+    
+    if (kwLabels.length > 0) {
+        new Chart(document.getElementById('keywordsChart'), {
+            type: 'bar',
+            data: {
+                labels: kwLabels,
+                datasets: [{
+                    label: 'Users Tracking',
+                    data: kwValues,
+                    backgroundColor: kwLabels.map((_, i) => barColors[i % barColors.length] + '80'),
+                    borderColor: kwLabels.map((_, i) => barColors[i % barColors.length]),
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+    
+    // Category Interest Doughnut
+    const catData = {{ stats.interest_categories | safe }};
+    const catLabels = Object.keys(catData);
+    const catValues = Object.values(catData);
+    
+    if (catLabels.length > 0) {
+        new Chart(document.getElementById('catInterestChart'), {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catValues,
+                    backgroundColor: catLabels.map(c => categoryColors[c] || '#94a3b8'),
+                    borderColor: '#0f172a',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

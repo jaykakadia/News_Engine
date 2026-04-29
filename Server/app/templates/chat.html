@@ -7,7 +7,7 @@
 <div class="chat-container">
     <div class="chat-messages" id="chat-box">
         <div class="message bot">
-            Hello Jay! I am your News Intelligence AI. You can ask me questions about the latest news, or ask for summaries of specific topics.
+            Hello {{ current_user_name }}! I am your News Intelligence AI. You can ask me questions about the latest news, or ask for summaries of specific topics.
         </div>
     </div>
     <div class="chat-input-area">
@@ -20,6 +20,36 @@
 
 <script>
     let chatHistory = [];
+
+    // Load saved chat history on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/chat/history')
+            .then(r => r.json())
+            .then(data => {
+                if (data.history && data.history.length > 0) {
+                    const box = document.getElementById('chat-box');
+                    chatHistory = data.history;
+                    
+                    for (const msg of data.history) {
+                        const div = document.createElement('div');
+                        div.className = 'message ' + (msg.role === 'user' ? 'user' : 'bot');
+                        
+                        if (msg.role === 'model') {
+                            let formatted = msg.content
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\n/g, '<br>');
+                            div.innerHTML = formatted;
+                        } else {
+                            div.textContent = msg.content;
+                        }
+                        
+                        box.appendChild(div);
+                    }
+                    box.scrollTop = box.scrollHeight;
+                }
+            })
+            .catch(err => console.log('Could not load chat history:', err));
+    });
 
     function sendMessage() {
         const input = document.getElementById('user-input');

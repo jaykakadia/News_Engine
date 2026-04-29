@@ -8,4 +8,6 @@ RSS_FEEDS = [
     ("https://www.espn.com/espn/rss/news", "Sports"),
     ("http://feeds.bbci.co.uk/news/business/rss.xml", "Business"),
     ("https://variety.com/feed/", "Entertainment"),
+    ("http://rss.cnn.com/rss/cnn_topstories.rss", "General"),
+    ("https://www.wired.com/feed/rss", "Technology"),
 ]
