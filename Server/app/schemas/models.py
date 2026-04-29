@@ -27,6 +27,7 @@ class NewsItemSchema(BaseModel):
     title: str
     content: str
     source: str
+    link: str = ""
     published_at: datetime
     category: str
     embedding_id: Optional[str] = None

@@ -37,14 +37,56 @@
             // Scroll to bottom
             box.scrollTop = box.scrollHeight;
             
-            // Mock bot response (we'll implement the real RAG backend later)
-            setTimeout(() => {
+            // Add a "typing" indicator
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'message bot';
+            typingMsg.textContent = 'Thinking...';
+            typingMsg.id = 'typing-indicator';
+            box.appendChild(typingMsg);
+            box.scrollTop = box.scrollHeight;
+            
+            // Call the real RAG backend
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove typing indicator
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) indicator.remove();
+                
+                // Add real bot response
                 const botMsg = document.createElement('div');
                 botMsg.className = 'message bot';
-                botMsg.textContent = "I'm processing your request regarding news... (Real AI responses coming soon once the Gemini RAG layer is activated)";
+                
+                if (data.error) {
+                    botMsg.textContent = "Error: " + data.error;
+                    botMsg.style.color = "red";
+                } else {
+                    // Simple formatting for markdown-like text from Gemini
+                    let formattedText = data.response
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+                    botMsg.innerHTML = formattedText;
+                }
+                
                 box.appendChild(botMsg);
                 box.scrollTop = box.scrollHeight;
-            }, 1000);
+            })
+            .catch(error => {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) indicator.remove();
+                
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'message bot';
+                errorMsg.textContent = "Sorry, I couldn't connect to the server.";
+                errorMsg.style.color = "red";
+                box.appendChild(errorMsg);
+            });
         }
     }
 

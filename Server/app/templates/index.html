@@ -8,7 +8,7 @@
     {% for item in news %}
     <article class="news-card">
         <div class="news-badge">{{ item.category }}</div>
-        <a href="{{ item.link }}" target="_blank" class="news-title">{{ item.title }}</a>
+        <a href="{{ url_for('dashboard.article_detail', news_id=item.news_id) }}" class="news-title">{{ item.title }}</a>
         <p class="news-content">{{ item.content | striptags }}</p>
         <div class="news-meta">
             <span><i class="far fa-clock"></i> {{ item.published_at.strftime('%Y-%m-%d') if item.published_at else 'Today' }}</span>

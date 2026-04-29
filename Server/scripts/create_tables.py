@@ -1,10 +1,10 @@
 import sys
 import os
+from app.utils.dynamodb import dynamodb, get_table_name
 
 # Add Server directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.utils.dynamodb import dynamodb, get_table_name
 
 def create_tables():
     tables = [

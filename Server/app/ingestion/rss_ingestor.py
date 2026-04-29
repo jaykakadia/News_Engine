@@ -1,8 +1,10 @@
 import feedparser
 import ssl
 import hashlib
+import requests
 from datetime import datetime
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+from bs4 import BeautifulSoup
 from app.models.news import NewsItem
 from app.schemas.models import NewsItemSchema
 from app.utils.embeddings import get_embeddings
@@ -41,6 +43,66 @@ def generate_id(link: str, title: str = "", summary: str = ""):
     fingerprint = f"{title.strip().lower()}|{summary.strip().lower()}"
     return hashlib.md5(fingerprint.encode()).hexdigest()
 
+def fetch_full_content(url: str) -> str:
+    """
+    Fetches the full article content from the original URL.
+    Falls back to empty string if scraping fails.
+    """
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10, verify=False)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove script, style, nav, footer, header tags
+        for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'form']):
+            tag.decompose()
+        
+        # Try common article content selectors
+        article = (
+            soup.find('article') or
+            soup.find('div', class_='article-body') or
+            soup.find('div', class_='post-content') or
+            soup.find('div', class_='entry-content') or
+            soup.find('div', class_='article-content') or
+            soup.find('div', {'id': 'article-body'}) or
+            soup.find('main')
+        )
+        
+        if article:
+            # Get all paragraphs from the article
+            paragraphs = article.find_all('p')
+            if paragraphs:
+                return '\n\n'.join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+        
+        # Fallback: get all paragraphs from the page
+        paragraphs = soup.find_all('p')
+        content = '\n\n'.join(p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 40)
+        return content[:5000]  # Cap at 5000 chars to avoid huge DB entries
+        
+    except Exception as e:
+        print(f"    Could not fetch full content: {e}")
+        return ""
+
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 100):
+    """
+    Splits text into overlapping chunks for vector embedding.
+    """
+    if not text:
+        return []
+    chunks = []
+    start = 0
+    text_len = len(text)
+    while start < text_len:
+        end = min(start + chunk_size, text_len)
+        chunks.append(text[start:end])
+        if end == text_len:
+            break
+        start += (chunk_size - overlap)
+    return chunks
 
 def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
     """
@@ -62,32 +124,50 @@ def ingest_rss(feed_url="https://news.google.com/rss", category="General"):
             
         print(f"  - New item: {entry.title[:50]}...")
         
-        # 2. Generate Embeddings
-        content_text = entry.title + " " + summary
-        embedding = get_embeddings(content_text)
+        # 2. Try to fetch full article content
+        full_content = ""
+        if link:
+            full_content = fetch_full_content(link)
         
-        # 3. Save to DynamoDB
+        # Use full content if available, otherwise fall back to RSS summary (stripped of HTML)
+        if full_content:
+            content = full_content
+        else:
+            # Strip HTML from summary (Google News sends HTML lists in summary)
+            content = BeautifulSoup(summary, "html.parser").get_text(separator=' ', strip=True)
+        
+        # 4. Save to DynamoDB
         news_data = NewsItemSchema(
             news_id=news_id,
             title=entry.title,
-            content=getattr(entry, 'summary', entry.title),
+            content=content,
             source=getattr(entry, 'source', {'title': 'Source'}).get('title', 'Source'),
+            link=link,
             published_at=datetime.utcnow(),
-            category=category,  # Use the passed category
+            category=category,
             embedding_id=news_id
         )
         
         if NewsItem.create(news_data):
-            # 4. Save to ChromaDB
+            # 5. Save chunks to ChromaDB
+            chunks = chunk_text(news_data.content, chunk_size=1000, overlap=200)
+            if not chunks:
+                chunks = [entry.title]
+            
+            chunk_embeddings = [get_embeddings(entry.title + " " + c) for c in chunks]
+            chunk_metadatas = [{
+                "title": news_data.title, 
+                "source": news_data.source,
+                "category": category,
+                "news_id": news_id
+            } for _ in chunks]
+            chunk_ids = [f"{news_id}_{i}" for i in range(len(chunks))]
+            
             news_collection.add(
-                embeddings=[embedding],
-                documents=[news_data.content],
-                metadatas=[{
-                    "title": news_data.title, 
-                    "source": news_data.source,
-                    "category": category # Add category to vector metadata
-                }],
-                ids=[news_id]
+                embeddings=chunk_embeddings,
+                documents=chunks,
+                metadatas=chunk_metadatas,
+                ids=chunk_ids
             )
             count += 1
             

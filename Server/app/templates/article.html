@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }} - News Engine{% endblock %}
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="article-detail">
+    <a href="{{ url_for('dashboard.index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Feed
+    </a>
+
+    <div class="article-header">
+        <span class="news-badge">{{ item.category }}</span>
+        <h1 class="article-title">{{ item.title }}</h1>
+        <div class="article-meta">
+            <span><i class="far fa-clock"></i> {{ item.published_at.strftime('%B %d, %Y') if item.published_at else 'Today' }}</span>
+            <span><i class="fas fa-link"></i> {{ item.source }}</span>
+        </div>
+    </div>
+
+    <div class="article-body">
+        {{ item.content | safe }}
+    </div>
+
+    {% if item.link %}
+    <a href="{{ item.link }}" target="_blank" class="btn btn-primary" style="margin-top: 2rem;">
+        <i class="fas fa-external-link-alt"></i> Read Original Article
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
