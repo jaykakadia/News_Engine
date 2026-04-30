@@ -38,23 +38,43 @@ class Interest:
             return False
 
     @classmethod
-    def update(cls, interest_id, keywords, categories):
+    def update(cls, interest_id, keywords, categories, alert_email=None):
         """
         Updates an existing interest record.
         """
         try:
             cls.table.update_item(
                 Key={'interest_id': interest_id},
-                UpdateExpression='SET keywords = :k, categories = :c',
+                UpdateExpression='SET keywords = :k, categories = :c, alert_email = :e',
                 ExpressionAttributeValues={
                     ':k': keywords,
-                    ':c': categories
+                    ':c': categories,
+                    ':e': alert_email
                 }
             )
             return True
         except ClientError as e:
             print(f"Error updating interest: {e.response['Error']['Message']}")
             return False
+
+    @classmethod
+    def upsert_for_user(cls, user_id, keywords, categories, alert_email=None):
+        """
+        Creates or updates interest for a user (enforces one record per user).
+        """
+        import uuid
+        existing = cls.get_by_user(user_id)
+        if existing:
+            return cls.update(existing.interest_id, keywords, categories, alert_email)
+        else:
+            interest_data = InterestSchema(
+                interest_id=str(uuid.uuid4()),
+                user_id=user_id,
+                keywords=keywords,
+                categories=categories,
+                alert_email=alert_email
+            )
+            return cls.create(interest_data)
 
     @classmethod
     def list_all(cls, limit=100):
@@ -67,3 +87,4 @@ class Interest:
         except ClientError as e:
             print(f"Error listing interests: {e.response['Error']['Message']}")
             return []
+

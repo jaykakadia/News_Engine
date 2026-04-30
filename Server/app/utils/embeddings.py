@@ -2,7 +2,10 @@ import os
 from google import genai
 
 # We use Google's advanced text-embedding model
-MODEL_NAME = 'gemini-embedding-2'
+MODEL_NAME = 'gemini-embedding-001'
+# MODEL_NAME = 'gemini-embedding-2'
+# MODEL_NAME = "gemini-2.5-flash-preview-09-2025"
+# MODEL_NAME = "gemini-2.0-flash-exp-text-embedding-preview-09-2025"
 
 def get_embeddings(text: str):
     """

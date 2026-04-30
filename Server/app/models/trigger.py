@@ -79,3 +79,22 @@ class Trigger:
         except ClientError as e:
             print(f"Error listing triggers: {e.response['Error']['Message']}")
             return []
+
+    @classmethod
+    def count_recent(cls, hours=24):
+        """
+        Returns the count of triggers created in the last N hours (for analytics).
+        Falls back to scan since we don't have a time-based GSI.
+        """
+        from datetime import datetime, timedelta
+        cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+        try:
+            response = cls.table.scan(
+                FilterExpression=Attr('created_at').gte(cutoff),
+                Select='COUNT'
+            )
+            return response.get('Count', 0)
+        except ClientError as e:
+            print(f"Error counting recent triggers: {e.response['Error']['Message']}")
+            return 0
+

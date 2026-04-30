@@ -36,17 +36,26 @@ def create_app():
     # Make session data available in all templates
     @app.context_processor
     def inject_user():
+        unread_count = 0
+        user_id = session.get('user_id') or session.get('tenant_id', '')
+        if user_id:
+            from app.models.trigger import Trigger
+            unread_count = Trigger.get_unread_count(user_id)
         return {
             'current_user_name': session.get('user_name', 'Guest'),
             'current_user_email': session.get('user_email', ''),
             'current_user_role': session.get('user_role', ''),
-            'is_logged_in': 'user_name' in session
+            'is_logged_in': 'user_name' in session,
+            'unread_alerts_count': unread_count
         }
 
-    # Start the background scheduler
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
-        from app.ingestion.scheduler import start_scheduler
-        start_scheduler()
+    # --- BACKGROUND SCHEDULER (DISABLED FOR CRON) ---
+    # The loop-based background thread is commented out below because we are now
+    # using a real System Cron job (`crontab`) to run `ingest_now.py` every hour.
+    # 
+    # if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+    #     from app.ingestion.scheduler import start_scheduler
+    #     start_scheduler()
 
     return app
 

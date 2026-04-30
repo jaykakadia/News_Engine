@@ -16,8 +16,8 @@ def score_article(news_item, interest):
     Calculates a relevance score (0-100) for a news article against a user's interests.
     
     Scoring:
-        +15 points per keyword found in the article title
-        +5  points per keyword found in the article content
+        +30 points per keyword found in the article title
+        +30 points per keyword found in the article content
         +20 points if the article category matches user's category interest
     """
     score = 0
@@ -30,9 +30,9 @@ def score_article(news_item, interest):
         if not kw:
             continue
         if kw in title_lower:
-            score += 15
+            score += 30
         if kw in content_lower:
-            score += 5
+            score += 30
     
     # Category matching
     for cat in interest.categories:
@@ -68,12 +68,18 @@ def check_triggers(news_item):
     for interest in all_interests:
         score = score_article(news_item, interest)
         
-        if score >= 50:
+        # --- BETA OVERRIDE ---
+        # Temporarily replacing the complex matrix with simple category matching to test email delivery.
+        # Once the app scales, uncomment `if score >= 50:` and remove this beta block.
+        is_category_match = any(cat.lower().strip() == news_item.category.lower().strip() for cat in interest.categories)
+        
+        # if score >= 50:
+        if is_category_match:
             trigger_data = TriggerSchema(
                 trigger_id=str(uuid.uuid4()),
                 user_id=interest.user_id,
                 news_id=news_item.news_id,
-                score=float(score),
+                score=int(score),
                 sent=False,
                 created_at=datetime.utcnow()
             )
@@ -83,10 +89,13 @@ def check_triggers(news_item):
                 print(f"    🔔 Trigger fired! User={interest.user_id[:8]}... Score={score} for '{news_item.title[:40]}...'")
                 
                 # Send email alert
-                email, name = _get_user_email_and_name(interest.user_id)
-                if email:
+                user_email, name = _get_user_email_and_name(interest.user_id)
+                alert_email = getattr(interest, 'alert_email', None)
+                target_email = alert_email if alert_email else user_email
+                
+                if target_email:
                     article_link = getattr(news_item, 'link', '')
-                    send_trigger_email(email, name, news_item.title, score, article_link)
+                    send_trigger_email(target_email, name, news_item.title, score, article_link)
     
     return triggers_created
 

@@ -4,6 +4,7 @@ from app.models.interest import Interest
 from app.models.news import NewsItem
 from app.schemas.models import InterestSchema
 from config.config import RSS_FEEDS
+from app.utils.email_sender import send_trigger_email
 import uuid
 
 alerts_bp = Blueprint('alerts', __name__)
@@ -52,20 +53,40 @@ def save_interests():
     keywords_raw = request.form.get('keywords', '')
     keywords = [k.strip() for k in keywords_raw.split(',') if k.strip()]
     categories = request.form.getlist('categories')
+    alert_email = request.form.get('alert_email', '').strip()
+    if not alert_email:
+        alert_email = None
     
-    existing = Interest.get_by_user(user_id)
-    
-    if existing:
-        Interest.update(existing.interest_id, keywords, categories)
-        flash("Interests updated successfully!", "success")
-    else:
-        interest_data = InterestSchema(
-            interest_id=str(uuid.uuid4()),
-            user_id=user_id,
-            keywords=keywords,
-            categories=categories
-        )
-        Interest.create(interest_data)
-        flash("Interests saved successfully!", "success")
+    Interest.upsert_for_user(user_id, keywords, categories, alert_email)
+    flash("Interests saved successfully!", "success")
     
     return redirect(url_for('alerts.interests_page'))
+
+@alerts_bp.route('/alerts/test_email', methods=['POST'])
+def test_email():
+    user_id = session.get('user_id') or session.get('tenant_id')
+    if not user_id:
+        return redirect(url_for('auth.login_page'))
+        
+    test_email = request.form.get('test_email', '').strip()
+    if not test_email:
+        flash("Please provide an email address to test.", "error")
+        return redirect(url_for('alerts.interests_page'))
+        
+    user_name = session.get('user_name', 'User')
+    
+    success = send_trigger_email(
+        to_email=test_email,
+        user_name=user_name,
+        article_title="TEST ALERT: Your News Engine Alerts are working!",
+        score=100,
+        article_link="#"
+    )
+    
+    if success:
+        flash(f"Test email sent successfully to {test_email}!", "success")
+    else:
+        flash(f"Failed to send test email to {test_email}. Check your SMTP configuration.", "error")
+        
+    return redirect(url_for('alerts.interests_page'))
+

@@ -1,0 +1,25 @@
+Viewed README.md:1-15
+Edited README.md
+Ran command: `crontab -l
+`
+
+To turn off the Cron Job, you can easily remove it from your system using your terminal. 
+
+You have two options depending on whether you want to delete all cron jobs or just edit the list:
+
+### Option 1: Remove all Cron Jobs (Easiest)
+If this news ingestion script is the **only** cron job running on your Mac (which is usually the case), you can clear the entire crontab by typing this in your terminal:
+```bash
+crontab -r
+```
+*(The `-r` stands for "remove". If you run `crontab -l` afterward, it will say "no crontab for jay" confirming it is off).*
+
+### Option 2: Edit the Crontab
+If you happen to have other cron jobs running for different projects and only want to delete the news engine one, type:
+```bash
+crontab -e
+```
+This opens the crontab editor. Just use your arrow keys to go down to the `0 * * * * cd "/Users/jay/...` line, delete it, and save the file (press `Esc`, type `:wq`, and press `Enter`).
+
+> [!NOTE]
+> If you turn the Cron Job off, remember that your news won't update in the background anymore unless you manually run `ingest_now.py` or go back into `app/__init__.py` and un-comment the background scheduler loop!

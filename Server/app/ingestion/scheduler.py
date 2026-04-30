@@ -16,8 +16,8 @@ def run_scheduler():
                 print(f"Error during scheduled ingestion for {url}: {e}")
         
         # Wait for 1 hour (3600 seconds)
-        print("Scheduler cycle complete. Sleeping for 1 hour...")
-        time.sleep(3600)
+        print("Scheduler cycle complete. Sleeping for 5 minute...")
+        time.sleep(300)
 
 def start_scheduler():
     """

@@ -34,6 +34,7 @@ class InterestSchema(BaseModel):
     user_id: str
     keywords: List[str]
     categories: List[str]
+    alert_email: Optional[str] = None
 
 class NewsItemSchema(BaseModel):
     news_id: str
@@ -50,7 +51,7 @@ class TriggerSchema(BaseModel):
     trigger_id: str
     user_id: str
     news_id: str
-    score: float
+    score: int
     sent: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

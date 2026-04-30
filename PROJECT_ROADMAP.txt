@@ -1,0 +1,62 @@
+NEWS ENGINE PROJECT ROADMAP: FROM A TO Z
+=========================================
+
+This document provides a step-by-step sequence to understand the "News Engine" project codebase. Follow this order to grasp the system architecture and implementation details.
+
+1. PROJECT OVERVIEW
+------------------
+The News Engine is a multi-tenant platform that:
+- Ingests news from RSS feeds.
+- Uses AI to extract\ entities and categories.
+- Stores data in a Vector Database (ChromaDB) for semantic search.
+- Provides a RAG-based AI Chat for users to query news.
+- Features a Trigger Engine for real-time alerts based on user interests.
+
+2. SYSTEM SETUP & ENTRY POINT
+----------------------------
+- .env: Check environment variables (API keys, DB paths).
+- run.py: The starting point of the Flask server.
+- app/__init__.py: The "App Factory" where the Flask app is initialized and Blueprints (modules) are registered.
+
+3. DATA MODELS (THE CORE)
+------------------------
+Read these in app/models/ to understand how data is structured:
+- tenant.py: Multi-tenancy logic (Agencies/Users).
+- news.py: Structure of a News article and its metadata.
+- interest.py: How user interests are defined for filtering.
+- trigger.py: Logic for alerts and notifications.
+
+4. DATA INGESTION (THE PIPELINE)
+-------------------------------
+This is how news gets into the system:
+- ingest_now.py: A standalone script triggered by System Cron.
+- app/ingestion/rss_ingestor.py: Fetches news from RSS feeds and saves to ChromaDB.
+- app/ingestion/entity_extractor.py: Uses AI/NLP to identify entities in news text.
+- app/ingestion/trigger_engine.py: Matches new articles against user interests to create alerts.
+
+5. THE AI & CHAT LAYER (RAG)
+---------------------------
+Understand how the AI interacts with the data:
+- app/models/chat.py: The logic for Retrieval-Augmented Generation (RAG) using LangChain and OpenAI.
+- app/routes/chat.py: API endpoints for the chat interface.
+
+6. WEB INTERFACE (ROUTES & UI)
+-----------------------------
+Explore these to see how the user interacts with the system:
+- app/routes/news.py: Displays the news feed with filters.
+- app/routes/dashboard.py: Main stats and overview.
+- app/routes/alerts.py: Notification center.
+- app/routes/auth.py: User login/registration.
+
+7. KEY DIRECTORIES
+-----------------
+- config/: Application configuration files.
+- chroma_db/: Local storage for the vector database (embeddings).
+- app/templates/: HTML files for the UI.
+- app/static/: CSS and Javascript files.
+
+8. COMMON QUESTIONS FOR YOUR SENIOR
+----------------------------------
+- How are tenants isolated? (Look at tenant_id in models).
+- How does the RAG work? (It retrieves relevant chunks from ChromaDB and sends them to GPT-4).
+- How is ingestion scheduled? (Via a system crontab calling ingest_now.py).
